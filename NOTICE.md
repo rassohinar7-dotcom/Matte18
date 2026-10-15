@@ -94,3 +94,5 @@ Per-file dimensions/source/SHA in assets/classic-light/pack.json. PNGs unchanged
 Material parameters/reference symbols are described in MATERIAL_DEVELOPMENT.md.
 
 0.6.3-test1 replaces USB screenshot preview with bundled Apple stock wallpaper images supplied by iClarified. Original article and asset URLs and SHA-256 values are recorded in assets/wallpapers/SOURCES.json. The display selects iOS 18, 26 or 27 by major version; it never reads the personal wallpaper or installs these assets on the phone.
+
+Windows runtime dependencies: pywin32 312 (PSF license), PyAV 19.0.1 (BSD-3-Clause; bundled FFmpeg libraries have their own licenses). License files are included in the respective distribution metadata.

@@ -1,0 +1,6 @@
+Windows packaged runtime: PASS
+Runner: GitHub Actions windows-latest
+Published EXE SHA256: 273a500f486d2d155fb4c25abde9ff4b53983b588054e4ba47d87353699bfb9d
+Verified: archive CRC, SHA256, embedded Python, Qt imports, cryptography native extension, pymobiledevice3.lockdown, win32security, pywintypes.
+No iPhone was connected to this test. This does not confirm visual effects or device writes.
+https://github.com/rassohinar7-dotcom/Matte18/actions/runs/38750911591
