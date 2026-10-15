@@ -17,7 +17,7 @@ jobs:
         shell: python
         run: |
           import hashlib, json, os, pathlib, urllib.request, zipfile
-          event = json.loads(pathlib.Path(os.environ['GITHUB_EVENT_PATH']).read_text())
+          event = json.loads(pathlib.Path(os.environ['GITHUB_EVENT_PATH']).read_text(encoding='utf-8'))
           release = event.get('release')
           if not release:
               release = json.load(urllib.request.urlopen('https://api.github.com/repos/${{ github.repository }}/releases'))[0]
