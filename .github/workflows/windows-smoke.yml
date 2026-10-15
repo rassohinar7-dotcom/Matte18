@@ -9,23 +9,17 @@ permissions:
 jobs:
   runtime:
     runs-on: windows-latest
-    timeout-minutes: 10
+    timeout-minutes: 5
     steps:
-      - name: Download and verify the packaged beta
+      - name: Download and verify 0.6.7 beta
         shell: python
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
-          import hashlib, json, os, pathlib, urllib.request, zipfile
-          base = 'https://api.github.com/repos/${{ github.repository }}/releases'
-          def request(url, binary=False):
-              headers = {'Authorization': 'Bearer '+os.environ['GH_TOKEN'], 'Accept': 'application/octet-stream' if binary else 'application/vnd.github+json', 'User-Agent': 'Matte18-runtime-check'}
-              return urllib.request.urlopen(urllib.request.Request(url, headers=headers)).read()
-          releases = json.loads(request(base))
-          release = next(r for r in releases if r['tag_name']=='v0.6.6')
-          asset = next(a for a in release['assets'] if a['name']=='Matte18-0.6.6-Windows-x64.exe')
-          data = request(asset['url'], True)
-          assert hashlib.sha256(data).hexdigest() == '273a500f486d2d155fb4c25abde9ff4b53983b588054e4ba47d87353699bfb9d'
+          import hashlib, json, pathlib, urllib.request, zipfile
+          base = 'https://api.github.com/repos/${{ github.repository }}/releases/tags/v0.6.7'
+          release = json.load(urllib.request.urlopen(base))
+          asset = next(a for a in release['assets'] if a['name']=='Matte18-0.6.7-Windows-x64.exe')
+          data = urllib.request.urlopen(asset['browser_download_url']).read()
+          assert hashlib.sha256(data).hexdigest() == '7e504720cc27cc26bfd846c10738a134a59adb2a643f161e9f2ff6794ad9ed58'
           pathlib.Path('Matte18.exe').write_bytes(data)
           with zipfile.ZipFile('Matte18.exe') as z:
               assert z.testzip() is None
@@ -39,3 +33,10 @@ jobs:
             exit 1
           }
           Get-Content "$env:LOCALAPPDATA\Matte18\launch-diagnostics.json"
+      - name: Start the packaged GUI in demo mode
+        shell: pwsh
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: |
+          & .\bundle\runtime\python.exe -c 'import runpy,sys; p="bundle/app/entry.py"; ns=runpy.run_path(p); sys.argv=[p,"--smoke"]; sys.exit(ns["run"]())'
+          if ($LASTEXITCODE -ne 0) { exit 1 }
