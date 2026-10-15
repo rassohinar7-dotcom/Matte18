@@ -1,6 +1,8 @@
 name: Windows packaged runtime
 on:
   workflow_dispatch:
+  release:
+    types: [published]
   push:
     paths:
       - .github/workflows/windows-smoke.yml
@@ -11,19 +13,23 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 5
     steps:
-      - name: Download and verify 0.6.7 beta
+      - name: Download and verify the published Windows package
         shell: python
         run: |
-          import hashlib, json, pathlib, urllib.request, zipfile
-          release = json.load(urllib.request.urlopen('https://api.github.com/repos/${{ github.repository }}/releases/tags/v0.6.7'))
-          asset = next(a for a in release['assets'] if a['name']=='Matte18-0.6.7-Windows-x64.exe')
+          import hashlib, json, os, pathlib, urllib.request, zipfile
+          event = json.loads(pathlib.Path(os.environ['GITHUB_EVENT_PATH']).read_text())
+          release = event.get('release')
+          if not release:
+              release = json.load(urllib.request.urlopen('https://api.github.com/repos/${{ github.repository }}/releases'))[0]
+          asset = next(a for a in release['assets'] if a['name'].endswith('-Windows-x64.exe'))
           data = urllib.request.urlopen(asset['browser_download_url']).read()
-          assert hashlib.sha256(data).hexdigest() == '7e504720cc27cc26bfd846c10738a134a59adb2a643f161e9f2ff6794ad9ed58'
+          assert 'sha256:'+hashlib.sha256(data).hexdigest() == asset['digest']
+          print('Verified package:',asset['name'])
           pathlib.Path('Matte18.exe').write_bytes(data)
           with zipfile.ZipFile('Matte18.exe') as z:
               assert z.testzip() is None
               z.extractall('bundle')
-      - name: Check native USB dependencies without connecting a phone
+      - name: Check native dependencies without connecting a phone
         shell: pwsh
         run: |
           & .\bundle\runtime\python.exe .\bundle\app\entry.py --check-runtime
@@ -31,8 +37,12 @@ jobs:
             Get-Content "$env:LOCALAPPDATA\Matte18\launch-error.txt" -ErrorAction SilentlyContinue
             exit 1
           }
-          Get-Content "$env:LOCALAPPDATA\Matte18\launch-diagnostics.json"
-      - name: Start the packaged GUI in demo mode
+      - name: Check the isolated AirTraffic helper runtime
+        shell: pwsh
+        run: |
+          '{"runtime_check":true}' | & .\bundle\runtime\python.exe -I .\bundle\app\vendor\airtraffic_sync.py
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+      - name: Start and close the packaged GUI in demo mode
         shell: pwsh
         env:
           QT_QPA_PLATFORM: windows
