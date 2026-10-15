@@ -15,8 +15,7 @@ jobs:
         shell: python
         run: |
           import hashlib, json, pathlib, urllib.request, zipfile
-          base = 'https://api.github.com/repos/${{ github.repository }}/releases/tags/v0.6.7'
-          release = json.load(urllib.request.urlopen(base))
+          release = json.load(urllib.request.urlopen('https://api.github.com/repos/${{ github.repository }}/releases/tags/v0.6.7'))
           asset = next(a for a in release['assets'] if a['name']=='Matte18-0.6.7-Windows-x64.exe')
           data = urllib.request.urlopen(asset['browser_download_url']).read()
           assert hashlib.sha256(data).hexdigest() == '7e504720cc27cc26bfd846c10738a134a59adb2a643f161e9f2ff6794ad9ed58'
@@ -36,7 +35,7 @@ jobs:
       - name: Start the packaged GUI in demo mode
         shell: pwsh
         env:
-          QT_QPA_PLATFORM: offscreen
+          QT_QPA_PLATFORM: windows
         run: |
           & .\bundle\runtime\python.exe -c 'import runpy,sys; p="bundle/app/entry.py"; ns=runpy.run_path(p); sys.argv=[p,"--smoke"]; sys.exit(ns["run"]())'
           if ($LASTEXITCODE -ne 0) { exit 1 }
