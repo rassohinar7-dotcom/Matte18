@@ -34,10 +34,12 @@ jobs:
         run: |
           & .\bundle\runtime\python.exe .\bundle\app\entry.py --check-runtime
           if ($LASTEXITCODE -ne 0) { exit 1 }
-      - name: Test backup parsing and WebClip delivery regressions without a phone
+      - name: Run full packaged regression suite without a phone
         shell: pwsh
+        env:
+          QT_QPA_PLATFORM: windows
         run: |
-          & .\bundle\runtime\python.exe -c 'import runpy,sys,pathlib,unittest; root=pathlib.Path("bundle").resolve(); ns=runpy.run_path(str(root/"app/entry.py")); ns["configure_runtime"](root); sys.path.insert(0,str(root/"app/tests")); suite=unittest.TestSuite(unittest.defaultTestLoader.discover(str(root/"app/tests"),pattern=p) for p in ("test_backup_validation.py","test_webclips.py")); result=unittest.TextTestRunner(verbosity=2).run(suite); sys.exit(not result.wasSuccessful())'
+          & .\bundle\runtime\python.exe .\bundle\app\tools\run_packaged_tests.py
           if ($LASTEXITCODE -ne 0) { exit 1 }
       - name: Check the isolated AirTraffic helper runtime
         shell: pwsh
